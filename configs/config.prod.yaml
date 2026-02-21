@@ -1,0 +1,6 @@
+addr: ":80"
+profile: false
+
+origins:
+  - "http://production.website"
+  - "http://production.website"

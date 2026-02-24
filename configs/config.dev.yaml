@@ -1,7 +1,0 @@
-addr: ":80"
-profile: false
-pprof_addr: ":6061"
-
-origins:
-  - "http://localhost"
-  - "http://*.localhost"

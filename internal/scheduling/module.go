@@ -14,8 +14,8 @@ import (
 )
 
 type Dependencies struct {
-	Repo          domain.SchedulingRepository
-	TokenVerifier auth.TokenVerifier
+	SchedulingRepository domain.SchedulingRepository
+	TokenVerifier        auth.TokenVerifier
 }
 
 type Module struct {
@@ -34,17 +34,17 @@ type Module struct {
 
 func NewModule(dep Dependencies) *Module {
 	// query
-	listSchedulesSvc := schedule_list.NewHandler(dep.Repo)
+	listSchedulesSvc := schedule_list.NewHandler(dep.SchedulingRepository)
 	listTimeslotsHttpHandler := http.NewListSlotsHttpHandler(listSchedulesSvc)
-	timeslotDetailsSvc := schedule_details.NewHandler(dep.Repo)
+	timeslotDetailsSvc := schedule_details.NewHandler(dep.SchedulingRepository)
 	timeslotDetailsHttpHandler := http.NewSlotDetailsHttpHandler(timeslotDetailsSvc)
 
 	// commands
-	newTimeslotSvc := new_timeslot.NewHandler(dep.Repo)
+	newTimeslotSvc := new_timeslot.NewHandler(dep.SchedulingRepository)
 	newTimeslotHttpHandler := http.CreateNewSlotHttpHandler(newTimeslotSvc)
-	confirmScheduleSvc := confirm_schedule.NewHandler(dep.Repo)
+	confirmScheduleSvc := confirm_schedule.NewHandler(dep.SchedulingRepository)
 	confirmScheduleHttpHandler := http.CreateConfirmScheduleHttpHandler(confirmScheduleSvc)
-	declineScheduleSvc := decline_schedule.NewHandler(dep.Repo)
+	declineScheduleSvc := decline_schedule.NewHandler(dep.SchedulingRepository)
 	declineScheduleHttpHandler := http.CreateDeclineScheduleHttpHandler(declineScheduleSvc)
 
 	return &Module{

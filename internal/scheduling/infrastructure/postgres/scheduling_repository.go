@@ -17,3 +17,11 @@ func NewSchedulingRepository(db *sql.DB) *SchedulingRepository {
 func (r *SchedulingRepository) Save(ctx context.Context, schedule *domain.Schedule) error {
 	return nil
 }
+
+func (r *SchedulingRepository) GetById(ctx context.Context, id string) (*domain.Schedule, error) {
+	return nil, nil
+}
+
+func (r *SchedulingRepository) List(ctx context.Context) ([]domain.Schedule, error) {
+	return nil, nil
+}

@@ -1,0 +1,94 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"flag"
+	"fmt"
+	"github/grzegab/calendar/internal/app"
+	"github/grzegab/calendar/internal/shared/router"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github/grzegab/calendar/internal/shared/infrastructure/db"
+	"github/grzegab/calendar/internal/shared/ws"
+)
+
+// init is responsible for setting up CLI variables
+func init() {
+	// load variables from command line, e.g. go run main.go -config=app.yaml
+	flag.StringVar(app.AppConfig.ConfigFile, "config", "config.yaml", "config file path")
+}
+
+func main() {
+	t := time.Now()
+	fmt.Printf("[%s] app is starting ...\n", t.Format("2006-01-02 15:04:05"))
+
+	flag.Parse()
+	if err := app.LoadConfig(); err != nil {
+		fmt.Printf("failed to load config: %v\n", err)
+		fmt.Println("using default config file")
+	}
+
+	// load profiler if needed
+	if app.AppConfig.Debug {
+		go func() {
+			fmt.Printf("starting pprof on %s\n", app.AppConfig.PprofAddr)
+			if err := http.ListenAndServe(app.AppConfig.PprofAddr, nil); err != nil {
+				fmt.Printf("pprof server error: %v\n", err)
+			}
+		}()
+	} else {
+		fmt.Println("pprof disabled in non-dev environment")
+	}
+
+	database, err := db.NewPostgres(app.AppConfig.DB)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	h := ws.NewHub()
+	go h.Run()
+
+	r := router.New(app.AppConfig.Origins, h)
+	wsHub := ws.NewHub()
+
+	application := app.CreateApp(
+		app.WithDB(database),
+		app.WithRouter(r.Handler()),
+		app.WithWebSocket(wsHub),
+		app.WithAuthVerifier(app.AppConfig.JWT.Secret),
+	)
+
+	server := &http.Server{
+		Addr:         app.AppConfig.Addr,
+		Handler:      application.Router(),
+		ReadTimeout:  time.Duration(app.AppConfig.HTTP.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(app.AppConfig.HTTP.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(app.AppConfig.HTTP.IdleTimeout) * time.Second,
+	}
+
+	go func() {
+		fmt.Printf("starting app on %s\n", app.AppConfig.Addr)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("server error: %v", err)
+		}
+	}()
+
+	// Graceful shutdown
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	<-sigCh
+	log.Println("Shutdown signal received, shutting down...")
+
+	h.Stop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	server.Shutdown(ctx)
+}

@@ -46,20 +46,23 @@ func (a *App) Router() chi.Router {
 }
 
 func (a *App) buildModules() {
-
 	postgresRepo := usersPostgres.NewUsersRepository(a.db)
 	schedulingRepo := schedulingPostgres.NewSchedulingRepository(a.db)
-	bookingRepo := bookingPostgres.NewBookingRepository(a.db)
+	domainBookingRepo := bookingPostgres.NewBookingRepository(a.db)
+	listBookingsRepo := bookingPostgres.NewListBookingsRepository(a.db)
 
 	usersModule := users.NewModule(users.Dependencies{
 		UserRepository: postgresRepo,
 	})
+
 	schedulingModule := scheduling.NewModule(scheduling.Dependencies{
 		SchedulingRepository: schedulingRepo,
 		TokenVerifier:        a.verifier,
 	})
+
 	bookingModule := booking.NewModule(booking.Dependencies{
-		BookingRepository: bookingRepo,
+		DomainBookingRepository: domainBookingRepo,
+		ListBookingsRepository:  listBookingsRepo,
 	})
 
 	a.Health = NewHealthService()

@@ -1,5 +1,5 @@
 package list_bookings
 
-type Repository interface {
+type ReadRepository interface {
 	UserBookings(id string) ([]View, error)
 }

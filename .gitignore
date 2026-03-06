@@ -104,6 +104,5 @@ go.work.sum
 # env file
 .env
 
-### Configs
-/configs/*
-!/configs/config.default.yaml
+### Docker
+/docker/postgres/data/*

@@ -20,8 +20,8 @@ import (
 
 // init is responsible for setting up CLI variables
 func init() {
-	// load variables from command line, e.g. go run main.go -config=app.yaml
-	flag.StringVar(app.AppConfig.ConfigFile, "config", "config.yaml", "config file path")
+	// load variables from command line, e.g. go run main.go -config=.env
+	flag.StringVar(&app.AppConfig.ConfigFile, "env", ".env", "env file path")
 }
 
 func main() {
@@ -55,12 +55,12 @@ func main() {
 	go h.Run()
 
 	r := router.New(app.AppConfig.Origins, h)
-	wsHub := ws.NewHub()
+	//wsHub := ws.NewHub()
 
 	application := app.CreateApp(
 		app.WithDB(database),
 		app.WithRouter(r.Handler()),
-		app.WithWebSocket(wsHub),
+		//app.WithWebSocket(wsHub),
 		app.WithAuthVerifier(app.AppConfig.JWT.Secret),
 	)
 

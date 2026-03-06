@@ -1,10 +1,12 @@
 package app
 
 import (
-	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
 )
 
 type DatabaseConfig struct {
@@ -27,78 +29,91 @@ type JWTConfig struct {
 }
 
 type Config struct {
-	ConfigFile *string
+	ConfigFile string
 	Debug      bool
 	Origins    []string
 	DB         DatabaseConfig
 	HTTP       HttpConfig
 	JWT        JWTConfig
-	Modules    []string `mapstructure:"modules"`
-	Addr       string   `mapstructure:"addr"`
-	PprofAddr  string   `mapstructure:"pprof_addr"`
+	Modules    []string
+	Addr       string
+	PprofAddr  string
 }
 
 var AppConfig Config
 
 func LoadConfig() error {
-	v := viper.New()
-	v.SetConfigType("yaml")
-	v.AddConfigPath(".")
-	v.AddConfigPath("./config")
-	v.AddConfigPath("../../")
+	// Wczytywanie .env.default najpierw (może być zastąpione przez .env)
+	_ = godotenv.Load(".env.default")
 
-	// Load default config file
-	v.SetConfigName("config.default")
-	if err := v.ReadInConfig(); err != nil {
-		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
-			return fmt.Errorf("error reading base config file: %w", err)
+	// Wczytywanie .env (jeśli istnieje)
+	_ = godotenv.Load()
+
+	// Jeśli określono inny plik konfiguracyjny przez flagę
+	if AppConfig.ConfigFile != "" {
+		if err := godotenv.Overload(AppConfig.ConfigFile); err != nil {
+			fmt.Printf("Warning: error loading specified config file %s: %v\n", AppConfig.ConfigFile, err)
 		}
 	}
 
-	// Load user config file
-	if AppConfig.ConfigFile != nil {
-		fmt.Println("Loading user config file: ", *AppConfig.ConfigFile)
-		v.SetConfigName(*AppConfig.ConfigFile)
-		if err := v.MergeInConfig(); err != nil {
-			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-				return fmt.Errorf("error reading env config file: %w", err)
-			}
-		}
+	AppConfig.Addr = getEnv("ADDR", ":80")
+	AppConfig.Debug = getEnvBool("DEBUG", false)
+	AppConfig.PprofAddr = getEnv("PPROF_ADDR", ":6061")
+
+	AppConfig.DB.Host = getEnv("DB_HOST", "localhost")
+	AppConfig.DB.Port = getEnvInt("DB_PORT", 5432)
+	AppConfig.DB.User = getEnv("DB_USER", "app")
+	AppConfig.DB.Password = getEnv("DB_PASSWORD", "app")
+	AppConfig.DB.DBName = getEnv("DB_NAME", "app")
+	AppConfig.DB.SSLMode = getEnv("DB_SSLMODE", "disable")
+
+	AppConfig.HTTP.ReadTimeout = getEnvInt("HTTP_READ_TIMEOUT", 5)
+	AppConfig.HTTP.WriteTimeout = getEnvInt("HTTP_WRITE_TIMEOUT", 10)
+	AppConfig.HTTP.IdleTimeout = getEnvInt("HTTP_IDLE_TIMEOUT", 10)
+
+	AppConfig.JWT.Secret = getEnv("JWT_SECRET", "")
+
+	modulesStr := getEnv("MODULES", "")
+	if modulesStr != "" {
+		AppConfig.Modules = strings.Split(modulesStr, ",")
 	}
 
-	// Set listening port
-	AppConfig.Addr = v.GetString("addr")
-
-	// Set profiler port
-	AppConfig.PprofAddr = v.GetString("pprof_addr")
-
-	// Set database values
-	AppConfig.DB.Host = v.GetString("db.host")
-	AppConfig.DB.Port = v.GetInt("db.port")
-	AppConfig.DB.User = v.GetString("db.user")
-	AppConfig.DB.Password = v.GetString("db.password")
-	AppConfig.DB.DBName = v.GetString("db.name")
-	AppConfig.DB.SSLMode = v.GetString("db.sslMode")
-
-	// HTTP settings
-	AppConfig.HTTP.ReadTimeout = v.GetInt("http.readTimeout")
-	AppConfig.HTTP.WriteTimeout = v.GetInt("http.writeTimeout")
-	AppConfig.HTTP.IdleTimeout = v.GetInt("http.idleTimeout")
-
-	// JWT settings
-	AppConfig.JWT.Secret = v.GetString("jwt_secret")
-
-	// Enable modules
-	modules := v.GetStringSlice("modules")
-	for _, m := range modules {
-		AppConfig.Modules = append(AppConfig.Modules, m)
-	}
-
-	// Set CORS origins
-	origins := v.GetStringSlice("origins")
-	for _, o := range origins {
-		AppConfig.Origins = append(AppConfig.Origins, o)
+	originsStr := getEnv("ORIGINS", "")
+	if originsStr != "" {
+		AppConfig.Origins = strings.Split(originsStr, ",")
 	}
 
 	return nil
+}
+
+func getEnv(key, defaultValue string) string {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	return value
+}
+
+func getEnvInt(key string, defaultValue int) int {
+	valueStr, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return defaultValue
+	}
+	return value
+}
+
+func getEnvBool(key string, defaultValue bool) bool {
+	valueStr, exists := os.LookupEnv(key)
+	if !exists {
+		return defaultValue
+	}
+	value, err := strconv.ParseBool(valueStr)
+	if err != nil {
+		return defaultValue
+	}
+	return value
 }

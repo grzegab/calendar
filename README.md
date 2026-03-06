@@ -21,7 +21,7 @@ This is a work in progress, so it isn't functional yet. Things to be completed b
 - [ ] Recoverer for HTTP requests (middleware)
 - [X] Create a config mechanism (read conf files)
 - [ ] Login mechanism (JWT tokens)
-- [ ] Dockerize
+- [X] Dockerize
 - [ ] Makefile for simpler instructions
 - [ ] PostgreSQL database setup
 - [ ] WebSockets setup

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github/grzegab/calendar/internal/app"
+	"github/grzegab/calendar/internal/app/debug"
 	"github/grzegab/calendar/internal/shared/router"
 	"log"
 	"net/http"
@@ -28,22 +29,13 @@ func main() {
 	t := time.Now()
 	fmt.Printf("[%s] app is starting ...\n", t.Format("2006-01-02 15:04:05"))
 
+	debug.Start()
+	debug.StartMemProfile()
+
 	flag.Parse()
 	if err := app.LoadConfig(); err != nil {
 		fmt.Printf("failed to load config: %v\n", err)
 		fmt.Println("using default config file")
-	}
-
-	// load profiler if needed
-	if app.AppConfig.Debug {
-		go func() {
-			fmt.Printf("starting pprof on %s\n", app.AppConfig.PprofAddr)
-			if err := http.ListenAndServe(app.AppConfig.PprofAddr, nil); err != nil {
-				fmt.Printf("pprof server error: %v\n", err)
-			}
-		}()
-	} else {
-		fmt.Println("pprof disabled in non-dev environment")
 	}
 
 	database, err := db.NewPostgres(app.AppConfig.DB)
@@ -91,4 +83,7 @@ func main() {
 	defer cancel()
 
 	server.Shutdown(ctx)
+
+	debug.StopMemProfile()
+	fmt.Printf("[%s] app is stopped, bye!\n", t.Format("2006-01-02 15:04:05"))
 }

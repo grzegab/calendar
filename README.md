@@ -33,7 +33,7 @@ This is a work in progress, so it isn't functional yet. Things to be completed b
 - [ ] Unit tests
 - [ ] Integration tests (Database, other services)
 - [ ] E2E tests (Happy path, other cases)
-- [ ] Profiling with pprof
+- [X] Profiling with pprof
 - [ ] Add GitHub pipeline
 
 ## Running app

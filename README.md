@@ -53,6 +53,20 @@ Teacher select student that is interesrd in using slot time. Teacher can also de
 User will register with phone number and email. To login code will be sent by SMS or email.
 After logging in, user can book time slots. If time slot is accepted user will receive notification by websocket.
 
+### Event storming design
+User register:
+![Register user](www.github.com/grzegab/calendar/docs/register_user.png)
+
+User login:
+![Login user](www.github.com/grzegab/calendar/docs/login_user.png)
+
+Activate user:
+![Activate user](www.github.com/grzegab/calendar/docs/activate_user.png)
+
+
+### C4 diagrams
+
+
 ##  REST API with DDD
 
 This is a REST API application for booking lessons. 

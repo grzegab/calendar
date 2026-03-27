@@ -6,8 +6,10 @@ import (
 	"github/grzegab/calendar/internal/booking/application/new_booking"
 	"github/grzegab/calendar/internal/booking/domain"
 	"github/grzegab/calendar/internal/booking/interfaces/http"
+	"github/grzegab/calendar/internal/shared/infrastructure/auth"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Module struct {
@@ -17,11 +19,13 @@ type Module struct {
 	NewBookingHttpHandler    *http.NewBookingHttpHandler
 	CancelBookingService     *cancel_booking.Handler
 	CancelBookingHttpHandler *http.CancelBookingHttpHandler
+	tokenVerifier            auth.TokenVerifier
 }
 
 type Dependencies struct {
 	DomainBookingRepository domain.BookingRepository
 	ListBookingsRepository  list_bookings.ReadRepository
+	TokenVerifier           auth.TokenVerifier
 }
 
 func NewModule(dep Dependencies) *Module {
@@ -39,11 +43,15 @@ func NewModule(dep Dependencies) *Module {
 		NewBookingHttpHandler:    newBookingHttpHandler,
 		CancelBookingService:     cancelBookingService,
 		CancelBookingHttpHandler: cancelBookingHttpHandler,
+		tokenVerifier:            dep.TokenVerifier,
 	}
 }
 
 func (m *Module) RegisterRoutes(r chi.Router) {
 	r.Route("/bookings", func(r chi.Router) {
+		r.Use(auth.JwtMiddleware(m.tokenVerifier))
+		r.Use(middleware.Recoverer)
+
 		r.Get("/", m.ListBookingsHttpHandler.Handle)
 		r.Post("/", m.NewBookingHttpHandler.Handle)
 		r.Delete("/{id}", m.CancelBookingHttpHandler.Handle)

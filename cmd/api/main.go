@@ -50,23 +50,17 @@ func main() {
 	//wsHub := ws.NewHub()
 
 	application := app.CreateApp(
+		app.WithTimeoutConfig(app.AppConfig.HTTP),
 		app.WithDB(database),
 		app.WithRouter(r.Handler()),
 		//app.WithWebSocket(wsHub),
+		app.WithJwtGenerator(app.AppConfig.JWT.Secret),
 		app.WithAuthVerifier(app.AppConfig.JWT.Secret),
 	)
 
-	server := &http.Server{
-		Addr:         app.AppConfig.Addr,
-		Handler:      application.Router(),
-		ReadTimeout:  time.Duration(app.AppConfig.HTTP.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(app.AppConfig.HTTP.WriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(app.AppConfig.HTTP.IdleTimeout) * time.Second,
-	}
-
 	go func() {
 		fmt.Printf("starting app on %s\n", app.AppConfig.Addr)
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := application.Start(app.AppConfig.Addr); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("server error: %v", err)
 		}
 	}()
@@ -82,7 +76,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	server.Shutdown(ctx)
+	application.Stop(ctx)
 
 	debug.StopMemProfile()
 	fmt.Printf("[%s] app is stopped, bye!\n", t.Format("2006-01-02 15:04:05"))

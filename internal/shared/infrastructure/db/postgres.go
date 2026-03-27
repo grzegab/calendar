@@ -30,8 +30,7 @@ func NewPostgres(config app.DatabaseConfig) (*sql.DB, error) {
 	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(5 * time.Minute)
 
-	// ✅ ważne — sprawdza połączenie
-	if err := db.Ping(); err != nil {
+	if err = db.Ping(); err != nil {
 		return nil, err
 	}
 

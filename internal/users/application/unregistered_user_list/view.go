@@ -1,4 +1,4 @@
-package active_user_list
+package unregistered_user_list
 
 type View struct {
 	ID    string

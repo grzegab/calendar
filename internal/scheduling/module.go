@@ -11,6 +11,7 @@ import (
 	"github/grzegab/calendar/internal/shared/infrastructure/auth"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Dependencies struct {
@@ -65,6 +66,7 @@ func NewModule(dep Dependencies) *Module {
 func (m *Module) RegisterRoutes(r chi.Router) {
 	r.Route("/scheduling", func(r chi.Router) {
 		r.Use(auth.JwtMiddleware(m.tokenVerifier))
+		r.Use(middleware.Recoverer)
 
 		r.Get("/", m.listTimeslotsHttpHandler.Handle)
 		r.Get("/{id}", m.timeslotDetailsHttpHandler.Handle)

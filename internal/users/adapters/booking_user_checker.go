@@ -21,7 +21,7 @@ func (a *BookingUserChecker) Exists(
 
 	_, err := a.repo.GetByID(userID)
 	if err != nil {
-		if errors.Is(err, domain.ErrUserNotFound{}) {
+		if errors.Is(err, domain.ErrorUserNotFound) {
 			return false, nil
 		}
 		return false, err

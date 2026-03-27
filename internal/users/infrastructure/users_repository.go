@@ -1,4 +1,4 @@
-package postgres
+package infrastructure
 
 import (
 	"context"
@@ -57,7 +57,7 @@ func (r *UserRepository) findOne(
 
 	if err := row.Scan(&id, &email, &phone, &status); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrUserNotFound{}
+			return nil, domain.ErrorUserNotFound
 		}
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func mapToDomain(
 		domain.UserID(id),
 		e,
 		p,
-		domain.UserStatus(status),
+		domain.UserStatusFromString(status),
 	)
 
 	return user, nil

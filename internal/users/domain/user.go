@@ -1,18 +1,16 @@
 package domain
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 )
 
 type UserID string
-type UserStatus string
+type UserRole string
 
 const (
-	StatusActive   UserStatus = "active"
-	StatusInactive UserStatus = "inactive"
-	StatusPending  UserStatus = "pending"
+	RoleAdmin   UserRole = "admin"
+	RoleTeacher UserRole = "teacher"
+	RoleStudent UserRole = "student"
 )
 
 type User struct {
@@ -20,6 +18,7 @@ type User struct {
 	email       Email
 	phoneNumber PhoneNumber
 	status      UserStatus
+	roles       []UserRole
 }
 
 func NewUser(email Email, phone PhoneNumber) *User {
@@ -27,7 +26,7 @@ func NewUser(email Email, phone PhoneNumber) *User {
 		id:          UserID(uuid.NewString()),
 		email:       email,
 		phoneNumber: phone,
-		status:      StatusActive,
+		status:      StatusPending,
 	}
 }
 
@@ -40,9 +39,31 @@ func RehydrateUser(id UserID, email Email, phone PhoneNumber, status UserStatus)
 	}
 }
 
+func (u *User) IsAdmin() bool {
+	for _, role := range u.roles {
+		if role == RoleAdmin {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) Activate() error {
+	if u == nil {
+		return ErrorUserNotFound
+	}
+
+	if u.status == StatusActive {
+		return ErrorUserAlreadyActive
+	}
+	u.status = StatusActive
+
+	return nil
+}
+
 func (u *User) Deactivate() error {
 	if u.status == StatusInactive {
-		return errors.New("already inactive")
+		return ErrorUserAlreadyInactive
 	}
 	u.status = StatusInactive
 

@@ -14,6 +14,7 @@ func NewRegisterUserHttpHandler(svc *register_user.Handler) *RegisterUserHttpHan
 }
 
 func (h *RegisterUserHttpHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not initialized", http.StatusNotImplemented)
 	//var req struct {
 	//	Email string `json:"email"`
 	//	Phone string `json:"phone"`

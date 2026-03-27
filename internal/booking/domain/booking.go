@@ -40,8 +40,8 @@ func NewBooking(
 
 	return &Booking{
 		ID:        id,
-		StudentID: studentID,
-		SlotID:    slotID,
+		StudentID: StudentID(studentID),
+		SlotID:    SlotID(slotID),
 		StartsAt:  startsAt,
 		Status:    "pending",
 	}, nil

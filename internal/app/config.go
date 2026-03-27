@@ -57,8 +57,6 @@ func LoadConfig() error {
 	}
 
 	AppConfig.Addr = getEnv("ADDR", ":80")
-	AppConfig.Debug = getEnvBool("DEBUG", false)
-	AppConfig.PprofAddr = getEnv("PPROF_ADDR", ":6061")
 
 	AppConfig.DB.Host = getEnv("DB_HOST", "localhost")
 	AppConfig.DB.Port = getEnvInt("DB_PORT", 5432)
